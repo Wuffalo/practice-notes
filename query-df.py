@@ -8,21 +8,35 @@
 #SQL query needs dataframe, assumes SQL knowledge, protect from injection?
 
 import pandas as pd
+import xlsxwriter
+import os
+
+if os.path.exists("/mnt/c/Users/WMINSKEY/.pen/Breakout_py.xlsx"):
+  os.remove("/mnt/c/Users/WMINSKEY/.pen/Breakout_py.xlsx")
+
 #import pandasql
 #from pandasql import sqldf
 #pysqldf = lambda q: sqldf(q, globals())
 
-path_to_csv = "/mnt/c/Users/WMINSKEY/.pen/FTP-Project/20191030.csv"
+#path_to_csv = "/mnt/c/Users/WMINSKEY/.pen/FTP-Project/20191030.csv"
+path_to_SOS = "/mnt/c/Users/WMINSKEY/.pen/SOS.csv"
+path_to_excel = "/mnt/c/Users/WMINSKEY/.pen/Breakout_py.xlsx"
 
-df = pd.read_csv(path_to_csv)
+test_code = False
 
-# print(df.head(5))
+show_DSLC = True
+show_ROANOKE = True
+show_RLCA = True
+show_WWT = True
+show_IngramMX = True
 
-# print(df.tail(2))
+df = pd.read_csv(path_to_SOS)
+
+writer = pd.ExcelWriter(path_to_excel, engine='xlsxwriter')
 
 # print(df.shape)     #   (rows, columns)
 # print(df.ndim)      #   number of dimensions
-print(df.dtypes)    #   list columns and assumed data type
+# print(df.dtypes)    #   list columns and assumed data type
 # print(df['Weight'].describe())
 # print(df['Product'].describe())
 
@@ -35,22 +49,45 @@ print(df.dtypes)    #   list columns and assumed data type
 # print(df[['Weight', 'Pallet_ID']])
 # print(df.iloc[:, [6,0]])
 
-wpp = df.groupby('Pallet_ID')['Weight'].sum()
+#wpp = df.groupby('Pallet_ID')['Weight'].sum()
 
 #wpp.columns = ['Pallet ID','Total Weight']
 
 #wpp.columns('Weight') = wpp
 
-print(wpp.dtypes)
-print(wpp.ndim)
+#print(wpp.dtypes)
+#print(wpp.ndim)
 
 #wpp.sort()
 
-#print(wpp.head(10))
-
 #print(list(wpp)[10])
 
-print(wpp.head(2))
+#Create DF queries
+DSLC = df['TYPEDESCR'] == "DSLC Move"
+ROANOKE = df['CUSTID'] == "7128"
+RLCA = df['SVCLVL'] == "RLCA-LTL-4_DAY"
+WWT = df['SVCLVL'] == "TXAP-TL-STD_WWT"
+IngramMX = df['C_COMPANY'] == "Interamerica Forwarding C/O Ingram Micro Mexi"
+
+#Check if dataframes are empty
+if DSLC.empty == True:
+    show_DSLC = False
+if ROANOKE.empty == True:
+    show_ROANOKE = False
+if RLCA.empty == True:
+    show_RLCA = False
+if WWT.empty == True:
+    show_WWT = False
+if IngramMX.empty == True:
+    show_IngramMX = False
+
+#Give preview of queries
+if test_code == True:
+    print("DSLC Orders: \n",df[DSLC].head(2))
+    print("Roanoke Orders: \n",df[ROANOKE].head(2))
+    print("RLCA Orders: \n",df[RLCA].head(2))
+    print("WWT Orders: \n",df[WWT].head(2))
+    print("Ingram MX Orders: \n",df[IngramMX].head(2))
 
 ### Filter columns
 #   Search integer column for match #
@@ -94,3 +131,16 @@ print(wpp.head(2))
 # elif query =="4":
 #     SQY = input("Enter SQL query: ")
 #     print("You entered SQL: ", SQY)
+
+if show_DSLC == True:
+    df[DSLC].to_excel(writer, sheet_name='DSLC')
+if show_ROANOKE == True:
+    df[ROANOKE].to_excel(writer, sheet_name='Roanoke')
+if show_RLCA == True:
+    df[RLCA].to_excel(writer, sheet_name='RLCA')
+if show_WWT == True:
+    df[WWT].to_excel(writer, sheet_name='WWT')
+if show_IngramMX == True:
+    df[IngramMX].to_excel(writer, sheet_name='IngramMX')
+
+writer.save()
