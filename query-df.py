@@ -10,19 +10,21 @@
 import pandas as pd
 import xlsxwriter
 import os
+import glob
 
 if os.path.exists("/mnt/c/Users/WMINSKEY/.pen/Breakout_py.xlsx"):
   os.remove("/mnt/c/Users/WMINSKEY/.pen/Breakout_py.xlsx")
 
-#import pandasql
-#from pandasql import sqldf
-#pysqldf = lambda q: sqldf(q, globals())
-
-#path_to_csv = "/mnt/c/Users/WMINSKEY/.pen/FTP-Project/20191030.csv"
-path_to_SOS = "/mnt/c/Users/WMINSKEY/.pen/SOS.csv"
-path_to_excel = "/mnt/c/Users/WMINSKEY/.pen/Breakout_py.xlsx"
-
 test_code = False
+
+if test_code == True:
+    path_to_SOS = "/mnt/c/Users/WMINSKEY/.pen/SOS.csv" # change to latest_file
+else:
+    list_of_files = glob.glob('/mnt/c/Users/WMINSKEY/Downloads/Shipment Order Summary -*.csv') # * means all if need specific format then *.csv
+    latest_file = max(list_of_files, key=os.path.getctime)
+    path_to_SOS = latest_file
+
+path_to_excel = "/mnt/c/Users/WMINSKEY/.pen/Breakout_py.xlsx"
 
 show_DSLC = True
 show_ROANOKE = True
@@ -32,11 +34,21 @@ show_IngramMX = True
 
 df = pd.read_csv(path_to_SOS)
 
+#columns to delete - INITIAL PASS
+
+df = df.drop(columns=['ORDERKEY','SO','SS','STORERKEY','INCOTERMS','ORDERDATE','ACTUALSHIPDATE','DAYSPASTDUE',
+                'PASTDUE','ORDERVALUE','TOTALSHIPPED','EXCEP','STOP','PSI_FLAG','UDFNOTES','INTERNATIONALFLAG',
+                'BILLING','LOADEDTIME','UDFVALUE1'])
+
+df = df.rename(columns={'EXTERNORDERKEY':'SO-SS','C_COMPANY':'Customer','ADDDATE':'Add Date','STATUSDESCR':'Status',
+                        'TOTALORDERED':'QTY','SVCLVL':'Carrier','EXTERNALLOADID':'Load ID','EDITDATE':'Last Edit',
+                        'C_STATE':'State','C_COUNTRY':'Country','Textbox6':'TIS'})
+
 writer = pd.ExcelWriter(path_to_excel, engine='xlsxwriter')
 
 # print(df.shape)     #   (rows, columns)
 # print(df.ndim)      #   number of dimensions
-# print(df.dtypes)    #   list columns and assumed data type
+print(df.dtypes)    #   list columns and assumed data type
 # print(df['Weight'].describe())
 # print(df['Product'].describe())
 
@@ -65,9 +77,14 @@ writer = pd.ExcelWriter(path_to_excel, engine='xlsxwriter')
 #Create DF queries
 DSLC = df['TYPEDESCR'] == "DSLC Move"
 ROANOKE = df['CUSTID'] == "7128"
-RLCA = df['SVCLVL'] == "RLCA-LTL-4_DAY"
-WWT = df['SVCLVL'] == "TXAP-TL-STD_WWT"
-IngramMX = df['C_COMPANY'] == "Interamerica Forwarding C/O Ingram Micro Mexi"
+# ROANOKE = df[(df['CUSTID'] == '7128') & (df['Carrier'] != 'BNAF*')]
+RLCA = df['Carrier'] == "RLCA-LTL-4_DAY"
+WWT = df['Carrier'] == "TXAP-TL-STD_WWT"
+IngramMX = df['Customer'] == "Interamerica Forwarding C/O Ingram Micro Mexi"
+
+#drop columns - SECOND PASS
+df = df.drop(columns=['TYPEDESCR','CUSTID','PROMISEDATE','Last Edit'])
+print(df.dtypes)
 
 #Check if dataframes are empty
 if DSLC.empty == True:
