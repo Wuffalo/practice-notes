@@ -4,53 +4,42 @@
 @author: wuffalo
 """
 
-#first 3 options run func for pallet or entry
-#SQL query needs dataframe, assumes SQL knowledge, protect from injection?
-
 import pandas as pd
+import numpy as np
 import xlsxwriter
 import os
 import glob
 
-if os.path.exists("/mnt/c/Users/WMINSKEY/.pen/Breakout_py.xlsx"):
-  os.remove("/mnt/c/Users/WMINSKEY/.pen/Breakout_py.xlsx")
+path_to_excel = "/mnt/c/Users/WMINSKEY/Output/Master_FTP.csv"
 
-test_code = False
-
-if test_code == True:
-    path_to_SOS = "/mnt/c/Users/WMINSKEY/.pen/SOS.csv" # change to latest_file
-else:
-    list_of_files = glob.glob('/mnt/c/Users/WMINSKEY/Downloads/Shipment Order Summary -*.csv') # * means all if need specific format then *.csv
-    latest_file = max(list_of_files, key=os.path.getctime)
-    path_to_SOS = latest_file
-
-path_to_excel = "/mnt/c/Users/WMINSKEY/.pen/Breakout_py.xlsx"
-
-show_DSLC = True
-show_ROANOKE = True
-show_RLCA = True
-show_WWT = True
-show_IngramMX = True
-
-df = pd.read_csv(path_to_SOS)
-
-#columns to delete - INITIAL PASS
-
-df = df.drop(columns=['ORDERKEY','SO','SS','STORERKEY','INCOTERMS','ORDERDATE','ACTUALSHIPDATE','DAYSPASTDUE',
-                'PASTDUE','ORDERVALUE','TOTALSHIPPED','EXCEP','STOP','PSI_FLAG','UDFNOTES','INTERNATIONALFLAG',
-                'BILLING','LOADEDTIME','UDFVALUE1'])
-
-df = df.rename(columns={'EXTERNORDERKEY':'SO-SS','C_COMPANY':'Customer','ADDDATE':'Add Date','STATUSDESCR':'Status',
-                        'TOTALORDERED':'QTY','SVCLVL':'Carrier','EXTERNALLOADID':'Load ID','EDITDATE':'Last Edit',
-                        'C_STATE':'State','C_COUNTRY':'Country','Textbox6':'TIS'})
-
-writer = pd.ExcelWriter(path_to_excel, engine='xlsxwriter')
+df = pd.read_csv(path_to_excel, parse_dates=[7,8], infer_datetime_format=True)
 
 # print(df.shape)     #   (rows, columns)
 # print(df.ndim)      #   number of dimensions
-print(df.dtypes)    #   list columns and assumed data type
+# print(df.dtypes)    #   list columns and assumed data type
 # print(df['Weight'].describe())
 # print(df['Product'].describe())
+
+#drop extra columns
+df.drop(df.iloc[:,16:], inplace=True, axis=1)
+
+#creates SO-SS column by combining sales order and ship set
+df['SO-SS'] = df['Sales_Order'].astype(str) + '-' + df['Ship_Set'].astype(str)
+
+# print(df.dtypes)
+# print(df.head(2))
+# print(df.tail(2))
+
+# print(df['Pallet_ID'].describe())
+# print(df['Carton_ID'].describe())
+# print("")
+# print(df['Product'].describe())
+# print(df['MESSAGE_ID'].describe())
+# print(df['SO-SS'].describe())
+# print(df['Pallet_LastEditDt'].describe())
+# print(df['ASN_Date_Time'].describe())
+# print(df['FTPday'].describe())
+# print(df['FTPsize'].describe())
 
 # #  3 ways to select a column
 # print(df.END_CUSTOMER_NAME.head(2))
@@ -74,37 +63,33 @@ print(df.dtypes)    #   list columns and assumed data type
 
 #print(list(wpp)[10])
 
-#Create DF queries
-DSLC = df['TYPEDESCR'] == "DSLC Move"
-ROANOKE = df['CUSTID'] == "7128"
-# ROANOKE = df[(df['CUSTID'] == '7128') & (df['Carrier'] != 'BNAF*')]
-RLCA = df['Carrier'] == "RLCA-LTL-4_DAY"
-WWT = df['Carrier'] == "TXAP-TL-STD_WWT"
-IngramMX = df['Customer'] == "Interamerica Forwarding C/O Ingram Micro Mexi"
+#isolate file where extra column was added#
+# df['Unnamed: 17'].replace('', np.nan, inplace=True)
+# df.dropna(subset=['Unnamed: 17'], inplace=True)
+# print(df['FTPday'])
 
-#drop columns - SECOND PASS
-df = df.drop(columns=['TYPEDESCR','CUSTID','PROMISEDATE','Last Edit'])
-print(df.dtypes)
+# dupes = df['Carton_ID'] == "Carton_ID"
 
-#Check if dataframes are empty
-if DSLC.empty == True:
-    show_DSLC = False
-if ROANOKE.empty == True:
-    show_ROANOKE = False
-if RLCA.empty == True:
-    show_RLCA = False
-if WWT.empty == True:
-    show_WWT = False
-if IngramMX.empty == True:
-    show_IngramMX = False
+# print(df[dupes])
 
-#Give preview of queries
-if test_code == True:
-    print("DSLC Orders: \n",df[DSLC].head(2))
-    print("Roanoke Orders: \n",df[ROANOKE].head(2))
-    print("RLCA Orders: \n",df[RLCA].head(2))
-    print("WWT Orders: \n",df[WWT].head(2))
-    print("Ingram MX Orders: \n",df[IngramMX].head(2))
+# df = df.drop(df[(df.score < 50) & (df.score > 20)].index)
+#delete where multiple headers
+df.drop(df[df.Carton_ID == "Carton_ID"].index, inplace=True)
+
+# print(df['END_CUSTOMER_ADDRESS'].head(5))
+
+#include na=False because some values are NaN, prevents error by assuming NaN is blank
+# iFlowStatus = Sales[Sales['Product'].str.contains('iFlow', na=False)]['Status']
+# London = df[df['END_CUSTOMER_ADDRESS'].str.contains('~IN~', na=False)]['END_CUSTOMER_ADDRESS']
+# print(df[London])
+
+# #Create DF queries
+# DSLC = df['TYPEDESCR'] == "DSLC Move"
+# ROANOKE = df['CUSTID'] == "7128"
+# # ROANOKE = df[(df['CUSTID'] == '7128') & (df['Carrier'] != 'BNAF*')]
+# RLCA = df['Carrier'] == "RLCA-LTL-4_DAY"
+# WWT = df['Carrier'] == "TXAP-TL-STD_WWT"
+# IngramMX = df['Customer'] == "Interamerica Forwarding C/O Ingram Micro Mexi"
 
 ### Filter columns
 #   Search integer column for match #
@@ -127,37 +112,36 @@ if test_code == True:
 #print(df[interesting_SO & heavy])
 ###     
 
-# query = input("Enter your query input for the Master FTP file\n"
-#               "1 - PalletID\n"
-#               "2 - Carton ID\n"
-#               "3 - SO-SS\n"
-#               "4 - SQL Query\n"
-#               "> ")
-# print("You have selected: ", query)
+x = 1
 
-# if query == "1":
-#     PalletID = input("Enter in your Pallet ID: ")
-#     print("You entered the pallet ID of: ", PalletID)
-#     print(MFTP.query('Pallet_ID == PalletID', inplace = True))
-# elif query == "2":
-#     CartonID = input("Enter in your carton ID (CID): ")
-#     print("You entered CID: ", CartonID)
-# elif query =="3":
-#     SOSS = input("Enter in your SO-SS: ")
-#     print("You entered in the SO-SS: ", SOSS)
+while x == 1:
+    query = input("Enter your query input for the Master FTP file\n"
+                "1 - PalletID\n"
+                "2 - Carton ID\n"
+                "3 - SO-SS\n"
+                "4 - SQL Query\n"
+                "5 - exit program"
+                "> ")
+    print("You have selected: ", query)
+
+    if query == "1":
+        PalletID = input("Enter in your Pallet ID: ")
+        print("You entered the pallet ID of: ", PalletID)
+        PLout = df['Pallet_ID'] == PalletID
+        print(df[PLout])
+    elif query == "2":
+        CartonID = int(input("Enter in your carton ID (CID): "))
+        print("You entered CID: ", CartonID)
+        CIDout = df['Carton_ID'] == CartonID
+        print(df[CIDout])
+    elif query =="3":
+        SOSS = input("Enter in your SO-SS: ")
+        print("You entered in the SO-SS: ", SOSS)
+        SOSSout = df['SO-SS'] == SOSS
+        print(df[SOSSout])
+    elif query =="5":
+        break
+
 # elif query =="4":
 #     SQY = input("Enter SQL query: ")
 #     print("You entered SQL: ", SQY)
-
-if show_DSLC == True:
-    df[DSLC].to_excel(writer, sheet_name='DSLC')
-if show_ROANOKE == True:
-    df[ROANOKE].to_excel(writer, sheet_name='Roanoke')
-if show_RLCA == True:
-    df[RLCA].to_excel(writer, sheet_name='RLCA')
-if show_WWT == True:
-    df[WWT].to_excel(writer, sheet_name='WWT')
-if show_IngramMX == True:
-    df[IngramMX].to_excel(writer, sheet_name='IngramMX')
-
-writer.save()
