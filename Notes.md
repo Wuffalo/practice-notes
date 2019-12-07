@@ -6,10 +6,14 @@ ftp-crawler
     auto check through FTP and compare lists of files.
     download if need be
     needs auth
+    ftplib
+        uses paramiko and pycrypto
+    pysftp
 
 24hour
     color buckets
     categories
+    exit if in use
 
 cron 
     auto-schedule, hourly, daily of ftp-crawler
@@ -20,4 +24,3 @@ Long-term:
 OTSR
     database
     pull ins
-    
