@@ -11,9 +11,7 @@ ftp-crawler
     pysftp
 
 24hour
-    color buckets
-    categories
-    exit if in use
+    
 
 cron 
     auto-schedule, hourly, daily of ftp-crawler

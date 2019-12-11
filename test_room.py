@@ -5,97 +5,56 @@
 """
 
 import pandas as pd
-import numpy as np
-import xlsxwriter
 import os
-import glob
 
-def format_sheet():
-    worksheet.set_column('A:A',13)
-    worksheet.set_column('B:B',45)
-    worksheet.set_column('C:C',5)
-    worksheet.set_column('D:D',7)
-    worksheet.set_column('E:E',20)
-    worksheet.set_column('F:F',14)
-    worksheet.set_column('G:G',21)
-    worksheet.set_column('H:H',11)
-    worksheet.set_column('I:I',5)
-    worksheet.set_column('J:J',28)
-    worksheet.set_column('K:K',14,format5)
-    worksheet.conditional_format('K2:K4000', {'type': 'duplicate',
-                                              'format': format3})
+path_to_FTP = "/mnt/shared-drive/05 - Office/FTP/FTP Files/"
 
-path_to_excel = "/mnt/shared-drive/05 - Office/OTS/Wolf/24Hour.xlsx"
+# def GetHumanReadable(size,precision=2):
+#     suffixes=['B','KB','MB','GB','TB']
+#     suffixIndex = 0
+#     while size > 1024 and suffixIndex < 4:
+#         suffixIndex += 1 #increment the index of the suffix
+#         size = size/1024.0 #apply the division
+#     return "%.*f%s"%(precision,size,suffixes[suffixIndex])
 
-if os.path.exists(path_to_excel):
-  os.remove(path_to_excel)
+file_list = []
+df = pd.DataFrame()
 
-list_of_files = glob.glob('/mnt/c/Users/WMINSKEY/Downloads/Shipment Order Summary -*.csv') # * means all if need specific format then *.csv
-latest_file = max(list_of_files, key=os.path.getctime)
-path_to_SOS = latest_file
-# path_to_excel = "/mnt/c/Users/WMINSKEY/.pen/24Hour.xlsx"
-# path_to_excel = "/mnt/shared-drive/05 - Office/OTS/Wolf/24Hour.xlsx"
+# walk file directory and create list of files
+for subdir, dirs, files in os.walk(path_to_FTP):
+    for file in files:
+        filepath = subdir + os.sep + file
+        if filepath.endswith(".csv"):
+            if filepath not in file_list:
+                fileday = os.path.basename(filepath).strip('.csv')
+                df['Path'].append(filepath)
+                df['DayName'].append(fileday)
+                # file_list.append(filepath)
+                # file_list.append(fileday)
 
-# df = pd.read_csv(path_to_excel, parse_dates=[7,8], infer_datetime_format=True)
-df = pd.read_csv(path_to_SOS, parse_dates=[11,19], infer_datetime_format=True)
+# print(file_list)
 
-#columns to delete - INITIAL PASS
-df = df.drop(columns=['ORDERKEY','SO','SS','STORERKEY','INCOTERMS','ORDERDATE','ACTUALSHIPDATE','DAYSPASTDUE',
-                'PASTDUE','ORDERVALUE','TOTALSHIPPED','EXCEP','STOP','PSI_FLAG','UDFNOTES','INTERNATIONALFLAG',
-                'BILLING','LOADEDTIME','UDFVALUE1'])
+# df = pd.DataFrame(file_list, columns=["Column"])
+# df.to_csv('/mnt/shared-drive/05 - Office/OTS/Wolf/list.csv', index=False)
 
-#rename remaining columns
-df = df.rename(columns={'EXTERNORDERKEY':'SO-SS','C_COMPANY':'Customer','ADDDATE':'Add Date','STATUSDESCR':'Status',
-                        'TOTALORDERED':'QTY','SVCLVL':'Carrier','EXTERNALLOADID':'Load ID','EDITDATE':'Last Edit',
-                        'C_STATE':'State','C_COUNTRY':'Country','Textbox6':'TIS'})
+df.to_csv('/mnt/shared-drive/05 - Office/OTS/Wolf/list.csv', index=False)
 
-writer = pd.ExcelWriter(path_to_excel, engine='xlsxwriter')
-workbook = writer.book
+'''
+df_list = []
 
-# Light red fill with dark red text.
-format1 = workbook.add_format({'bg_color':   '#FFC7CE',
-                               'font_color': '#9C0006'})
+# for each file name, grab file, format and append to list of dataframes
+for f in file_list:
+    sheet = pd.read_csv(f, error_bad_lines=False)
+    f_source = os.path.basename(f).strip('.csv')
+    sheet["FTPday"] = f_source
+    b_size = os.stat(f).st_size
+    sheet["FTPsize"] = b_size
+    df_list.append(sheet)
 
-# Light yellow fill with dark yellow text.
-format2 = workbook.add_format({'bg_color':   '#FFEB9C',
-                               'font_color': '#9C6500'})
+Master_FTP = pd.concat(df_list, ignore_index=True, sort=False)
 
-# Green fill with dark green text.
-format3 = workbook.add_format({'bg_color':   '#C6EFCE',
-                               'font_color': '#006100'})
-
-format5 = workbook.add_format({'num_format': '#'})
-
-#OG queries
-# ingram = df['Customer'] == 'Ingram Micro'
-# ingrammx = df['Customer'] == 'Interamerica Forwarding C/O Ingram Micro Mexi'
-# # roanoke = [df['CUSTID'] = 7128 | 
-# roanoke = df[(df['CUSTID'] == '7128') & (df['State'] == 'TX')]
-# OG = df[ingram|ingrammx|roanoke].index
-
-#CREATE QUERIES TO REMOVE
-remove_rtv = df['TYPEDESCR'] == 'RTV Move'
-remove_NS = df['Status'] == 'Not Started'
-remove_Lo = df['Status'] == 'Loaded'
-
-df.drop(df[remove_rtv|remove_NS|remove_Lo].index, inplace=True)
-
-# df.drop(df[df.Status == "Not Started"].index, inplace=True)
-
-#
-# df['Add Hour'] = df['Add Date'].dt.round('H').dt.hour
-df['Add Hour'] = df['Add Date'].dt.floor('1H')
-
-df.sort_values(by=['Add Hour','Status','Carrier'], inplace=True)
-# df.sort_values(by=['Add Date','Carrier','Load ID'], inplace=True)
-
-df = df.drop(columns=['TYPEDESCR','CUSTID','PROMISEDATE','Add Hour'])
-
-df.to_excel(writer, sheet_name='24Hour', index=False)
-worksheet = writer.sheets['24Hour']
-format_sheet()
-
-writer.save()
+Master_FTP.to_csv('C:/Users/WMINSKEY/Output/Master_FTP.csv',index=False)
+'''
 
 # print(df.shape)     #   (rows, columns)
 # print(df.ndim)      #   number of dimensions
