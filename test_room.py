@@ -7,7 +7,21 @@
 import pandas as pd
 import os
 
+def listOfTuples(l1, l2, l3): 
+    return list(map(lambda x, y, z:(x,y,z), l1, l2, l3)) 
+
 path_to_FTP = "/mnt/shared-drive/05 - Office/FTP/FTP Files/"
+path_to_record = '/mnt/shared-drive/05 - Office/OTS/Wolf/list.csv'
+
+if os.path.exists(path_to_record):
+    df_record = pd.read_csv(path_to_record)
+    file_list = df_record['full_file'].tolist()
+    new_list_needed = False
+    # df_record = df_record.rename(columns={'0':"full_file", '1':"day_file", '2':"size"})
+else: 
+    file_list = []
+    new_list_needed = True
+
 
 # def GetHumanReadable(size,precision=2):
 #     suffixes=['B','KB','MB','GB','TB']
@@ -17,8 +31,9 @@ path_to_FTP = "/mnt/shared-drive/05 - Office/FTP/FTP Files/"
 #         size = size/1024.0 #apply the division
 #     return "%.*f%s"%(precision,size,suffixes[suffixIndex])
 
-file_list = []
-df = pd.DataFrame()
+filepath_list = []
+fileday_list = []
+filesize_list = []
 
 # walk file directory and create list of files
 for subdir, dirs, files in os.walk(path_to_FTP):
@@ -27,17 +42,65 @@ for subdir, dirs, files in os.walk(path_to_FTP):
         if filepath.endswith(".csv"):
             if filepath not in file_list:
                 fileday = os.path.basename(filepath).strip('.csv')
-                df['Path'].append(filepath)
-                df['DayName'].append(fileday)
-                # file_list.append(filepath)
-                # file_list.append(fileday)
+                filepath_list.append(filepath)
+                fileday_list.append(int(fileday))
+                filesize = os.stat(filepath).st_size
+                filesize_list.append(filesize)
 
-# print(file_list)
+l1 = filepath_list
+l2 = fileday_list
+l3 = filesize_list
 
-# df = pd.DataFrame(file_list, columns=["Column"])
-# df.to_csv('/mnt/shared-drive/05 - Office/OTS/Wolf/list.csv', index=False)
+df_scan = pd.DataFrame(listOfTuples(l1,l2,l3))
 
-df.to_csv('/mnt/shared-drive/05 - Office/OTS/Wolf/list.csv', index=False)
+# df_diff = pd.concat([df_scan, df_record])
+# df_diff = df_diff.reset_index(drop=True)
+
+# df_gpby = df_diff.groupby(list(df_diff.columns))
+
+# idx = [x[0] for x in df_gpby.groups.values() if len(x) == 1]
+# print(df_diff.reindex(idx))
+
+# df_scan.to_csv('/mnt/shared-drive/05 - Office/OTS/Wolf/list.csv', index=False)
+# print("Scanned df")
+# df_scan = df_scan.rename(columns={0:"full_file", 1:"day_file", 2:"size"})
+# print(df_scan.dtypes)
+# print(df_scan.ndim)
+# print(df_scan.head(2))
+# print(df_scan.tail(2))
+# print(df_scan['day_file'].head(5))
+
+# print("Imported stored df")
+# df_record = df_record.rename(columns={'0':"full_file", '1':"day_file", '2':"size"})
+# print(df_record.dtypes)
+# print(df_record.ndim)
+# print(df_record.head(2))
+# print(df_record.tail(2))
+# print(df_record['day_file'].head(5))
+
+# print("Printing df_scan column names")
+# print(df_scan.columns)
+# print("Printing df_record column names")
+# print(df_record.columns)
+
+# df_out = pd.concat([df_scan,df_record],axis=1).drop_duplicates(keep=False) # combines two dataframes and removes duplicates, leaves 1 example of each
+# common = df_scan.merge(df_record, on='day_file')
+
+# common = pd.merge()
+
+# df1[(~df1.col1.isin(common.col1))&(~df1.col2.isin(common.col2))]
+if new_list_needed == True:
+    df_scan = df_scan.rename(columns={0:"full_file", 1:"day_file", 2:"size"})
+    df_scan.to_csv(path_to_record, index=False)
+    print("New list of FTP files created at "+'\''+path_to_record+'\'.')
+elif new_list_needed == False:
+    df_scan = df_scan.rename(columns={0:"full_file", 1:"day_file", 2:"size"})
+    df_out = df_scan[~df_scan.isin(df_record)].dropna()
+    if df_out.empty == True:
+        print("Nothing to download.")
+    else:
+        print("Need to download the following FTP days:")
+        print(df_out.day_file)
 
 '''
 df_list = []
@@ -55,6 +118,10 @@ Master_FTP = pd.concat(df_list, ignore_index=True, sort=False)
 
 Master_FTP.to_csv('C:/Users/WMINSKEY/Output/Master_FTP.csv',index=False)
 '''
+
+# import time
+# time.process_time() # gives current process time, clocks of cpu run
+# time.time() # gives actual current clock time to nanosecond degree
 
 # print(df.shape)     #   (rows, columns)
 # print(df.ndim)      #   number of dimensions
