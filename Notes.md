@@ -17,6 +17,10 @@ cron
     auto-schedule, hourly, daily of ftp-crawler
     download email?
 
+scrapy
+    download find ASN open wide
+    download UOV 3A4 wide
+
 Long-term:
 
 OTSR
