@@ -4,36 +4,23 @@
 @author: wuffalo
 """
 
-
-config_sftp.py
-host = 1.0.1
-username = e 
-port = 1
-password = abc 
-
-
-
 import config_sftp
 import pandas as pd
 import os
 import sys
 import pysftp
 
+cnopts = pysftp.CnOpts()
+cnopts.hostkeys.load(config_sftp.host_file)
 
 stfp_host = config_sftp.host
 sftp_name = config_sftp.username
 sftp_port = config_sftp.port
 sftp_pw = config_sftp.password
 
-srv = pysftp.Connection(host=stfp_host,username=sftp_name,password=sftp_pw)
+# srv = pysftp.Connection(host=stfp_host,username=sftp_name,password=sftp_pw,cnopts=cnopts)
 
-data = srv.listdir()
-
-srv.close()
-
-for i in data:
-    print(i)
-
+# srv.close()
 
 def listOfTuples(l1, l2, l3): 
     return list(map(lambda x, y, z:(x,y,z), l1, l2, l3)) 
@@ -49,7 +36,6 @@ if os.path.exists(path_to_record):
 else: 
     file_list = []
     new_list_needed = True
-
 
 # def GetHumanReadable(size,precision=2):
 #     suffixes=['B','KB','MB','GB','TB']
