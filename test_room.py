@@ -28,6 +28,7 @@ def listOfTuples(l1, l2, l3):
 path_to_FTP = "/mnt/shared-drive/05 - Office/FTP/FTP Files/"
 path_to_record = '/mnt/shared-drive/05 - Office/OTS/Wolf/list.csv'
 
+# check if stored list of saved files exists
 if os.path.exists(path_to_record):
     df_record = pd.read_csv(path_to_record)
     file_list = df_record['full_file'].tolist()
@@ -49,7 +50,7 @@ filepath_list = []
 fileday_list = []
 filesize_list = []
 
-# walk file directory and create list of files
+# walk ftp file directory and create list of files
 for subdir, dirs, files in os.walk(path_to_FTP):
     for file in files:
         filepath = subdir + os.sep + file
@@ -109,7 +110,7 @@ if new_list_needed == True:
     print("New list of FTP files created at "+'\''+path_to_record+'\'.')
 elif new_list_needed == False:
     df_scan = df_scan.rename(columns={0:"full_file", 1:"day_file", 2:"size"})
-    df_out = df_scan[~df_scan.isin(df_record)].dropna()
+    df_out = df_scan[~df_scan.isin(df_record)].dropna() # finds differences between dfscan in FTP folder and dfrecord from list
     if df_out.empty == True:
         print("Nothing to download.")
     else:
@@ -264,3 +265,9 @@ Master_FTP.to_csv('C:/Users/WMINSKEY/Output/Master_FTP.csv',index=False)
 #         print(df[SOSSout])
 #     elif query =="5":
 #         break
+
+# find index for first instance of x
+# df_ftx.index('20191222.csv')
+
+# list comprehension, enumate over a list looking for indexes of j instances
+# [i for i, j in enumerate(['foo', 'bar', 'baz']) if j == 'bar']
