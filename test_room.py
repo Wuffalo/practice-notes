@@ -19,7 +19,6 @@ sftp_port = config_sftp.port
 sftp_pw = config_sftp.password
 
 # srv = pysftp.Connection(host=stfp_host,username=sftp_name,password=sftp_pw,cnopts=cnopts)
-
 # srv.close()
 
 def listOfTuples(l1, l2, l3): 

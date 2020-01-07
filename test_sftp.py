@@ -37,22 +37,24 @@ print("Check if file exists: ")
 if srv.exists('/.csv') == True:
     print("Yes")
 
+remote_file_size = srv.stat('20191222.csv').st_size
+
 srv.close()
 
-df_ftx = []
+# df_ftx = []
 
-df_ftx = data
+# df_ftx = data
 
-print(data[0],data[1],data[-1])
+# print(data[0],data[1],data[-1])
 
-d1 = df_ftx.index('20191222.csv')
+# d1 = df_ftx.index('20191222.csv')
 
-print(d1)
-print(df_ftx[d1])
+# print(d1)
+# print(df_ftx[d1])
 
-# list comprehension, enumate over a list looking for indexes of j instances
-# [i for i, j in enumerate(['foo', 'bar', 'baz']) if j == 'bar']
-d5 = [i for i, j in enumerate(df_ftx) if j == '20191222.csv']
+# # list comprehension, enumate over a list looking for indexes of j instances
+# # [i for i, j in enumerate(['foo', 'bar', 'baz']) if j == 'bar']
+# d5 = [i for i, j in enumerate(df_ftx) if j == '20191222.csv']
 
-print(type(d5))
-print(d5[0])
+# print(type(d5))
+# print(d5[0])
