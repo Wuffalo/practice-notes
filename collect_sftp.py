@@ -24,8 +24,6 @@ sftp_pw = config_sftp.password
 
 path_to_FTP = "/mnt/shared-drive/05 - Office/FTP/FTP Files/"
 srcpath = "/mnt/c/Users/WMINSKEY/.pen/ftp-file-practice/downloaded/"
-# destpath = "/mnt/c/Users/WMINSKEY/.pen/ftp-file-practice/output/"
-
 
 filepath_list = []
 fileday_list = []
@@ -48,7 +46,6 @@ l3 = filesize_list
 
 df_local = pd.DataFrame(listOfTuples(l1,l2,l3))
 
-
 srv = pysftp.Connection(host=stfp_host,username=sftp_name,password=sftp_pw,cnopts=cnopts)
 
 remote = srv.chdir('.')
@@ -58,7 +55,6 @@ fileday_list = []
 filesize_list = []
 
 data = srv.listdir()
-
 data.remove(data[0])
 
 for i in data:
@@ -83,16 +79,26 @@ dfr = df_remote['day_file']
 
 df_out = dfr[~dfr.isin(dfl)].dropna()
 
-for i in df_out:
-    j = (str(i)+'.csv')
-    srv.get(j, '/mnt/c/Users/WMINSKEY/.pen/ftp-file-practice/downloaded/'+j)
+if df_out.empty == True:
+    srv.close()
+    print("Nothing to update.")
+    print(df_local['day_file'].tail(1))
+    print(df_remote['day_file'].tail(1))
+else:
+    for i in df_out:
+        j = (str(i)+'.csv')
+        srv.get(j, '/mnt/c/Users/WMINSKEY/.pen/ftp-file-practice/downloaded/'+j)
+        print("Downloading "+str(i))
+    for root, subFolders, files in os.walk(srcpath):
+        for file in files:
+            subFolder = os.path.join(path_to_FTP, file[:4], file[4:6])
+            if not os.path.isdir(subFolder):
+                os.makedirs(subFolder)
+            # print(os.path.join(root, file))
+            # print(subFolder)
+            shutil.copyfile(os.path.join(root, file), os.path.join(subFolder, file))
+            print("Moving "+file)
+    srv.close()
 
-srv.close()
-
-for root, subFolders, files in os.walk(srcpath):
-    for file in files:
-        subFolder = os.path.join(path_to_FTP, file[:4], file[4:6])
-        if not os.path.isdir(subFolder):
-            os.makedirs(subFolder)
-        shutil.copy2(os.path.join(root, file), subFolder)
-
+[os.remove(os.path.join(srcpath, f)) for f in os.listdir(srcpath) if f.endswith(".csv")]
+# for f in os.listdir(srcpath): if f.endswith(".csv"): os.remove(f)

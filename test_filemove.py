@@ -15,4 +15,3 @@ for root, subFolders, files in os.walk(srcpath):
                 shutil.copy2(os.path.join(root, file), subFolder)
         else:
             shutil.copy2(os.path.join(root, file), subFolder)
-
