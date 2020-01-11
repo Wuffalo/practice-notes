@@ -74,25 +74,12 @@ df_remote = pd.DataFrame(listOfTuples(l1,l2,l3))
 df_local = df_local.rename(columns={0:"full_file", 1:"day_file", 2:"size"})
 df_remote = df_remote.rename(columns={0:"full_file", 1:"day_file", 2:"size"})
 
-# combined = pd.concat([df_local, df_remote], ignore_index=True, sort=False)
-
 combined = df_local.merge(df_remote, on='day_file')
 
-# print(combined.head(1))
-# print(combined.tail(1))
-
-# print(combined.ndim)
-# print(combined.columns)
-# print(combined.dtypes)
-# print(combined.shape)
-
 #find where local is bigger than remote
-# print(combined.query('size_x > size_y').day_file)
 local_list = (combined.query('size_x > size_y').day_file).tolist()
-# print(local_list[:3])
 
 #find where remote is bigger than local
-# print(combined.query('size_y > size_x').day_file)
 remote_list = (combined.query('size_y > size_x').day_file).tolist()
 
 #Go through list of files which are bigger on local than remote. Narrow down to where remote has more rows than local.
@@ -115,7 +102,9 @@ remote_list = (combined.query('size_y > size_x').day_file).tolist()
 #         print(sheet_remote)
 
 counter = 1
-files_to_dl = []
+files_to_update = []
+local_index_store = []
+remote_index_store = []
 
 #Go through list of files which are bigger on remote than local. Narrow down to where remote has more rows than local.
 for i in remote_list:
@@ -130,54 +119,65 @@ for i in remote_list:
     sheet_remote = pd.read_csv("/mnt/c/Users/WMINSKEY/.pen/ftp-file-practice/downloaded/"+k, error_bad_lines=False)
     remote_index = len(sheet_remote.index)
     if remote_index > local_index:
-        print(j)
-        print("Local Index:")
-        print(local_index)
-        print("Remote Index:")
-        print(remote_index)
-        print(counter)
+        # print(j)
+        # print("Local Index:")
+        # print(local_index)
+        # print("Remote Index:")
+        # print(remote_index)
+        # print(counter)
         counter = counter+1
-        files_to_dl.append(j)
+        files_to_update.append(j)
+        local_index_store.append(local_index)
+        remote_index_store.append(remote_index)
 
 srv.close()
 
-print(files_to_dl)
-print(len(files_to_dl))
+print(files_to_update)
+print(len(files_to_update))
 
-# for root, subFolders, files in os.walk(srcpath):
-#     for file in files:
-#         subFolder = os.path.join(destpath, file[:4], file[4:6])
-#         if os.path.exists(os.path.join(subFolder, file)):
-#             if (int(os.stat(os.path.join(root, file)).st_size) - int(os.stat(os.path.join(subFolder, file)).st_size)) > 0:
-#                 shutil.copy2(os.path.join(root, file), subFolder)
-#         else:
-#             shutil.copy2(os.path.join(root, file), subFolder)
+# challenge = 1
 
-# dfl = df_local['day_file']
-# dfr = df_remote['day_file']
+# while challenge == 1:
+#     query = input("Action for FTP audit program:\n"
+#                 "1 - List files needing updating once more.\n"
+#                 "2 - Compare file row qty for each local and remote version.\n"
+#                 "3 - Update all listed files.\n"
+#                 "4 - exit program\n"
+#                 "> ")
+#     print("You have selected: ", query)
 
-# df_out = dfr[~dfr.isin(dfl)].dropna()
+#     if query == "1":
+#         print(files_to_update)
+#         print(len(files_to_update))
+#     elif query == "2":
+#         i = 0
+#         for i in files_to_update:
+#             print(files_to_update[i])
+#             print(local_index_store[i])
+#             print(remote_index_store[i])
+#             i = i+1
+#     elif query == "3":
+#         for i in files_to_update:
+#             j = str(i)
+#             k = j+'.csv'
+#             year = j[:4]
+#             month = j[4:6]
+#             origin = '/mnt/c/Users/WMINSKEY/.pen/ftp-file-practice/downloaded/'+k
+#             destination = os.path.join("/mnt/shared-drive/05 - Office/FTP/FTP Files/",year,month,k)
+#             shutil.copyfile(origin, destination)
+#     elif query == "4":
+#         break
 
-# if df_out.empty == True:
-#     srv.close()
-#     print("Nothing to update.")
-#     print(df_local['day_file'].tail(1))
-#     print(df_remote['day_file'].tail(1))
-# else:
-#     for i in df_out:
-#         j = (str(i)+'.csv')
-#         srv.get(j, '/mnt/c/Users/WMINSKEY/.pen/ftp-file-practice/downloaded/'+j)
-#         print("Downloading "+str(i))
-#     for root, subFolders, files in os.walk(srcpath):
-#         for file in files:
-#             subFolder = os.path.join(path_to_FTP, file[:4], file[4:6])
-#             if not os.path.isdir(subFolder):
-#                 os.makedirs(subFolder)
-#             # print(os.path.join(root, file))
-#             # print(subFolder)
-#             shutil.copyfile(os.path.join(root, file), os.path.join(subFolder, file))
-#             print("Moving "+file)
-#     srv.close()
+# remove following block of code to write over for bigger remote files
+# for i in files_to_update:
+#     j = str(i)
+#     k = j+'.csv'
+#     year = j[:4]
+#     month = j[4:6]
+#     origin = '/mnt/c/Users/WMINSKEY/.pen/ftp-file-practice/downloaded/'+k
+#     destination = os.path.join("/mnt/shared-drive/05 - Office/FTP/FTP Files/",year,month,k)
+#     shutil.copyfile(origin, destination)
+
 
 [os.remove(os.path.join(srcpath, f)) for f in os.listdir(srcpath) if f.endswith(".csv")]
 # for f in os.listdir(srcpath): if f.endswith(".csv"): os.remove(f)
